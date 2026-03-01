@@ -1,10 +1,16 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+/** @format */
 
-const geistSans = Geist({
+import type { Metadata } from "next";
+import { Geist_Mono, Poppins } from "next/font/google";
+import "./globals.css";
+import { AppHeader } from "@/components/ui/app-header";
+import { AppPreferencesProvider } from "@/lib/app-preferences";
+import { CardCursorGlowBinder } from "@/components/ui/card-cursor-glow";
+
+const poppins = Poppins({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -23,11 +29,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${poppins.variable} ${geistMono.variable} antialiased`}>
+        <AppPreferencesProvider>
+          <CardCursorGlowBinder />
+          <AppHeader />
+          {children}
+        </AppPreferencesProvider>
       </body>
     </html>
   );

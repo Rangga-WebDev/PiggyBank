@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum AccountType {
+  MAIN
+  VAULT
+  EMERGENCY
+}
+
+enum TxType {
+  INCOME
+  EXPENSE
+  TRANSFER
+  WITHDRAW
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  accounts           Account[]
+  goals              Goal[]
+  audits             AuditLog[]
+  transactions       Transaction[]
+  withdrawalRequests WithdrawalRequest[]
+}
+
+model Account {
+  id        String      @id @default(cuid())
+  userId    String
+  type      AccountType
+  createdAt DateTime    @default(now())
+
+  user User          @relation(fields: [userId], references: [id])
+  tx   Transaction[]
+
+  @@unique([userId, type])
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  userId    String
+  accountId String
+  type      TxType
+  amount    Int
+  category  String?
+  note      String?
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  account Account @relation(fields: [accountId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([accountId, createdAt])
+}
+
+model Goal {
+  id           String    @id @default(cuid())
+  userId       String
+  title        String
+  targetAmount Int
+  deadline     DateTime?
+  lockUntil    DateTime?
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  meta      Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+model WithdrawalRequest {
+  id             String           @id @default(cuid())
+  userId         String
+  accountType    AccountType // harus EMERGENCY untuk MVP
+  amount         Int
+  reasonCategory String
+  reasonText     String?
+  urgency        Int // 1-5
+  aiScore        Int? // 0-100 (nanti dari ML)
+  cooldownUntil  DateTime?
+  status         WithdrawalStatus @default(PENDING)
+  decidedAt      DateTime?
+  createdAt      DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
